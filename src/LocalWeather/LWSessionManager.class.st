@@ -27,7 +27,7 @@ LWSessionManager >> createSession: type [
 	^ self createTestSession
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #testing }
 LWSessionManager >> createTestSession [
 
 	^LWLocalSession new

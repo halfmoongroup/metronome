@@ -2,21 +2,18 @@
 Class part: Glorp description of what we're saving
 
 Responsibility part: I describe the database table and the map between the object and the table. 
-
 For the Collaborators Part: Used by GLORP to persist the local weather observation. 
 
 Public API and Key Messages
 
 - allTableName  descirbes the tables used because the table is mixed case  
 - classModelForOBSERVATION  - describes the observation object and
+= descriptionForLWObservation - 
+- tableForOBSERVATIONS
+
 - (for bonus points) how to create instances.
+ no instances are created except by glorp
 
-   One simple example is simply gorgeous.
- 
-Internal Representation and Key Implementation Points.
-
-
-    Implementation Points
 "
 Class {
 	#name : #LWObservationDescriptorSystem,
@@ -29,7 +26,7 @@ LWObservationDescriptorSystem >> allTableNames [
 	^#('Observations')
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #model }
 LWObservationDescriptorSystem >> classModelForLWObservation: aClassModel [
 
 	aClassModel newAttributeNamed: #id.
@@ -45,7 +42,7 @@ LWObservationDescriptorSystem >> classModelForLWObservation: aClassModel [
 
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #model }
 LWObservationDescriptorSystem >> descriptorForLWObservation: aDescriptor [
 	"batteryOk humidity id time rain temperature windDirDeg windAvgKmHour messageType "
 	| table |
@@ -81,7 +78,7 @@ LWObservationDescriptorSystem >> descriptorForLWObservation: aDescriptor [
 		to: (table fieldNamed: 'message').
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #model }
 LWObservationDescriptorSystem >> tableForOBSERVATIONS: aTable [
 
 	(aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey.

@@ -1,78 +1,64 @@
+"
+Class:  Manage the aquisition and presistence of data. 
+
+Responsibility: The server code listens to the MQTT broker and then 
+ses the JSON to create the object. The Object is 
+Collaborators:  State my main collaborators and one line about how I interact with them. 
+
+Public API and Key Messages
+
+- message one   
+- message two 
+- (for bonus points) how to create instances.
+
+   One simple example is simply gorgeous.
+ 
+Internal Representation and Key Implementation Points.
+
+    Instance Variables
+	context:		Manages the persistence of data
+	deviceId:		<Object>
+	logging:		<Object>
+	observationPromise:		<Object>
+	runing:		<Object>
+	task:		<Object>
+	taskBlock:		<Object>
+
+
+    Implementation Points
+"
 Class {
 	#name : #LWServer,
 	#superclass : #Object,
 	#instVars : [
+		'context',
 		'runing',
-		'buffer',
-		'bufferLimit',
 		'taskBlock',
-		'session',
-		'sessionType',
 		'deviceId',
-		'savedObservationCount',
-		'observationCountLimit',
 		'logging',
-		'sessionFactory',
-		'observationPromise'
+		'logger',
+		'observationPromise',
+		'task'
 	],
 	#category : #LocalWeather
 }
 
-{ #category : #accessing }
-LWServer >> buffer [
+{ #category : #testing }
+LWServer >> canRun [ 
 
-	^ buffer
+	^ task isNil and: [ taskBlock notNil  ].
 ]
 
 { #category : #accessing }
-LWServer >> buffer: anObject [
+LWServer >> context [
 
-	buffer := anObject
-]
-
-{ #category : #filtering }
-LWServer >> bufferAddObservation: observation [
-
-	self buffer add: observation 
-]
-
-{ #category : #filtering }
-LWServer >> bufferDelObservation [
-
-	^self buffer removeFirst. 
+	^ context
 ]
 
 { #category : #accessing }
-LWServer >> bufferLimit [
+LWServer >> context: anObject [
 
-	^ bufferLimit
-]
-
-{ #category : #accessing }
-LWServer >> bufferLimit: aNumber [
-
-	bufferLimit := aNumber
-]
-
-{ #category : #persistence }
-LWServer >> createSession [ 
-	| sessionTemp |
-	('persistent' = self sessionType) ifTrue: [ sessionTemp :=  LWSessionManager createDBSession  ]
-	ifFalse: [self sessionType: (sessionTemp :=  LWSessionManager createTestSession) ].
-	
-	^ sessionTemp
-]
-
-{ #category : #accessing }
-LWServer >> deviceId [
-
-	^ deviceId
-]
-
-{ #category : #accessing }
-LWServer >> deviceId: anObject [
-
-	deviceId := anObject
+	context := anObject
 ]
 
 { #category : #running }
@@ -80,7 +66,7 @@ LWServer >> getObservation [
 
 	| json  observation |
 	observationPromise   ifNil: [
-		 observationPromise := self taskBlock promise. 
+		 observationPromise := self taskBlock promiseAt: (Processor userBackgroundPriority). 
 		^nil ]
 	ifNotNil: [  
 		( observationPromise hasValue ) ifTrue: [
@@ -97,22 +83,15 @@ LWServer >> getObservation [
 { #category : #initialization }
 LWServer >> initialize [ 
 	logging := false.
-	buffer := LinkedList new.
-	sessionType := 'persistent'.
-	bufferLimit := 6.
-	savedObservationCount := 0.
-	observationCountLimit := 0.
-	sessionFactory := LWSessionManager  new. 
+	context := LWServerContext new. 
+	logger := LWLogger new. 
+
 ]
 
-{ #category : #utility }
-LWServer >> logEvent: name aTime: time aCount: count [
+{ #category : #accessing }
+LWServer >> isRuning [
 
-	Transcript show: name.
-	time ifNotNil: [	Transcript  show:  time ].
-	count ifNotNil: [	Transcript  show: ' count '; show: count ].
-	Transcript cr.
-	^ self.
+	^ task isNotNil and: [ task isActiveProcess  ]
 ]
 
 { #category : #accessing }
@@ -122,38 +101,9 @@ LWServer >> logging [
 ]
 
 { #category : #accessing }
-LWServer >> logging: anObject [
+LWServer >> logging: aswitch [
 
-	logging := anObject
-]
-
-{ #category : #accessing }
-LWServer >> observationCountLimit [
-
-	^ observationCountLimit
-]
-
-{ #category : #accessing }
-LWServer >> observationCountLimit: anObject [
-
-	observationCountLimit := anObject
-]
-
-{ #category : #persistence }
-LWServer >> persistObservation: obsevarion [
-
-	| sessionTemp |
-	sessionTemp := self session.
-	sessionTemp inUnitOfWorkDo: [ sessionTemp register: obsevarion ].
-	^savedObservationCount := savedObservationCount +1
-]
-
-{ #category : #utility }
-LWServer >> pruneCurrentList [
-
-	(5 < self buffer  size) ifTrue: [ 
-		self buffer removeFirst.
-	 ] 
+	logger isLogging: aswitch 
 ]
 
 { #category : #running }
@@ -161,105 +111,36 @@ LWServer >> run [
 
 	| observation count |
 	count := 0.
-	runing := true.
-	taskBlock ifNil: [ ^ nil ].
-	[ runing ] whileTrue: [ 
-		observation := self getObservation.
-		observation ifNotNil: [ 
-			observation isValidObsevation ifTrue: [ 
-				self saveObservation: observation.
-				runing := self shouldContinue ] ].
-		Processor yield ].
-	^ self
-]
-
-{ #category : #accessing }
-LWServer >> runing [
-
-	^ runing
-]
-
-{ #category : #accessing }
-LWServer >> runing: anObject [
-
-	runing := anObject
+	self canRun ifTrue: [ 
+		task := [ 
+				 count >100   ifTrue: [ Transcript show: 'running'; cr. count := 0. ].
+		        [ context captureComplete ] whileTrue: [ 
+			        observation := self getObservation.
+			        observation ifNotNil: [ 
+				        observation isValidObsevation ifTrue: [ 
+					        self context saveObservation: observation ] ] ] 
+		 ]  forkAt: Processor userBackgroundPriority
+			        named: 'Obs Capture' ].
+		Transcript show: (task isActiveProcess).
+	^ task
 ]
 
 { #category : #filtering }
 LWServer >> saveObservation: anObservation [
 
-	(buffer anySatisfy: [ :each | each = anObservation ]) ifTrue: [ 
-		self logging ifTrue: [ 
-			self
-				logEvent: 'not saved '
-				aTime: anObservation timeStr
-				aCount: buffer size ].
-		^ self ].
-	buffer add: anObservation.
-	self pruneCurrentList.
-		self logging ifTrue: [ 
-			self
-				logEvent: '    saved '
-				aTime: anObservation timeStr
-				aCount: buffer size ].
-	self persistObservation: anObservation
+	^self context saveObservation: anObservation
 ]
 
 { #category : #accessing }
-LWServer >> savedObservationCount [
+LWServer >> task [
 
-	^ savedObservationCount 
+	^ task
 ]
 
 { #category : #accessing }
-LWServer >> savedObservationCount: anObject [
+LWServer >> task: anObject [
 
-	savedObservationCount  := anObject
-]
-
-{ #category : #accessing }
-LWServer >> session [
-
-	session ifNil: [  session :=  sessionFactory createSession: self sessionType ].
-	session isLoggedIn ifFalse: [ session login ].
-	^session. 
-]
-
-{ #category : #accessing }
-LWServer >> session: anObject [
-
-	session := anObject
-]
-
-{ #category : #accessing }
-LWServer >> sessionFactory [
-
-	^ sessionFactory
-]
-
-{ #category : #accessing }
-LWServer >> sessionFactory: anObject [
-
-	sessionFactory := anObject
-]
-
-{ #category : #accessing }
-LWServer >> sessionType [
-
-	^ sessionType
-]
-
-{ #category : #accessing }
-LWServer >> sessionType: anObject [
-
-	sessionType := anObject
-]
-
-{ #category : #asserting }
-LWServer >> shouldContinue [
-	
-	(self observationCountLimit  ~= 0) ifTrue: [^(self savedObservationCount) < self observationCountLimit ].
-	^true
+	task := anObject
 ]
 
 { #category : #accessing }
