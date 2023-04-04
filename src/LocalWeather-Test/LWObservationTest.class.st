@@ -31,7 +31,7 @@ LWObservationTest >> testIsValidObservation [
 
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #tests }
 LWObservationTest >> testTemperature [
 	| tempF |
 	

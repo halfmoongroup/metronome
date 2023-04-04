@@ -9,10 +9,10 @@ LWServerTest >> testBuffer [
 
 	| server testValue | 
 	
-	server := LWServer new. 
-	server bufferAddObservation:  1.
+	server := LWBuffer new. 
+	server addObservation:  1.
 	self assert: server buffer size equals: 1. 
-   testValue := server bufferDelObservation.
+   testValue := server deleteObservation.
 	self assert: testValue equals: 1. 
 	self assert: server buffer size equals: 0. 
 
@@ -24,11 +24,11 @@ LWServerTest >> testInitializeServer [
 
 	| server  |
 	
-	server := LWServer new initialize.
+	server := LWServer new.
 	self assert: server taskBlock  isNil.
-	self assert: server bufferLimit > 0.
-	self assert: server savedObservationCount equals: 0.
-	self assert: server buffer size equals:0.
+	self assert: server context countLimit  equals:  0.
+	self assert: server context savedCount equals: 0.
+	self assert: server context countLimit equals:0.
 	
 ]
 
@@ -38,8 +38,8 @@ LWServerTest >> testMessageBuffer [
 	| server obs1 obs2 obs3 session | 
 	
 	server := LWServer new. 
-	server sessionType: 'test'.
-	session := server session.
+	server context sessionType: 'test'.
+	session := server context session.
 	
 	self assert: session class equals: LWLocalSession .
 		
@@ -50,24 +50,12 @@ LWServerTest >> testMessageBuffer [
 	obs3 := LWObservation new. 
 	obs3 messageType: 49; timeStr: '2023-03-12 18:39:50.098309'.
 
-   server saveObservation:  obs1. 
-	self assert: server buffer size equals: 1. 
+   server saveObservation: obs1. 
 	server saveObservation: obs2.
-	self assert: server buffer size equals: 1. 
 	server saveObservation: obs3 .
-	self assert: server buffer size equals: 2. 
+	self assert: ( (server context) hasSeen: obs1) equals: true. 
+	self assert: ( (server context) hasSeen: obs1) equals: true. 
+	self assert: ( (server context) hasSeen: obs1) equals: true. 
 
-
-]
-
-{ #category : #tests }
-LWServerTest >> testShouldContinue [
-	| server |
-	server := LWServer new. 
-	self assert: server shouldContinue equals: true. 
-	server savedObservationCount: 100. 
-	self assert: server shouldContinue equals: true. 
-	server observationCountLimit:  50. 
-	self assert: server shouldContinue equals: false. 
 
 ]

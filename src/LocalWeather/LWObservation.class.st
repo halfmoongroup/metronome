@@ -1,3 +1,39 @@
+"
+Class:  LWObservation an weather observation from the acurite 5-n-1 weather station.
+
+Responsibility: Holds the data sent from the stataion through a MMQT broker as a JSON packet. 
+
+Collaborators: LWServer reads the data fom the MQTT broker converts it to an Object 
+and then sends it to the database. 
+
+Public API and Key Messages
+
+
+- message - the JSON message from the MQTT broker
+   
+- (for bonus points) how to create instances.
+
+   NeoJSONReader fromString: as: LWObservation
+ 
+Internal Representation and Key Implementation Points.
+
+    Instance Variables
+	batteryOk:		battery level station
+	humidity:	 measurement 
+	id:		db key
+	message:		JSON value from broker
+	messageType:		56 or 49
+	model:		accurite-5n1
+	rain:		in mm
+	temperature:		degress celcius
+	time:		of Observation
+	timeStr:		time as a sring
+	windAvgKmHour:		wind speed
+	windDirDeg:		wind direction
+
+
+    Implementation Points
+"
 Class {
 	#name : #LWObservation,
 	#superclass : #Object,
@@ -147,7 +183,7 @@ LWObservation >> model: anObject [
 	model := anObject
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 LWObservation >> rain [ 
 	
 	^(rain asFloat roundTo: 0.001)
