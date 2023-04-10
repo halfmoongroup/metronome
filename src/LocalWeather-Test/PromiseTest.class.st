@@ -24,8 +24,9 @@ PromiseTest >> testPromiseBlockingAndUnblocking [
 	           controllingPromiseSemaphore wait.
 	           1 + 3 ] promise.
 	self deny: promise hasValue.
-	(Delay forSeconds: 5) wait.
-	self assert: promise hasValue.
+	controllingPromiseSemaphore signal. 
+	(Delay forMilliseconds:  250) wait.
+	self assert: promise hasValue equals: true.
 	self assert: promise value equals: 4
 ]
 

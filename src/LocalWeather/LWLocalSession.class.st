@@ -31,7 +31,7 @@ Class {
 	#instVars : [
 		'linkedList'
 	],
-	#category : #'LocalWeather-Test'
+	#category : #LocalWeather
 }
 
 { #category : #enumerating }

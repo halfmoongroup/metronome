@@ -1,5 +1,5 @@
 Class {
-	#name : #LWServerContext,
+	#name : #LWContext,
 	#superclass : #Object,
 	#instVars : [
 		'session',
@@ -14,7 +14,7 @@ Class {
 }
 
 { #category : #asserting }
-LWServerContext >> captureComplete [
+LWContext >> captureComplete [
 	
 	^(countLimit  ~= 0) 
 	ifTrue: 
@@ -25,25 +25,25 @@ LWServerContext >> captureComplete [
 ]
 
 { #category : #accessing }
-LWServerContext >> countLimit [
+LWContext >> countLimit [
 
 	^ countLimit 
 ]
 
 { #category : #accessing }
-LWServerContext >> countLimit: anNumber [
+LWContext >> countLimit: anNumber [
 
  	countLimit := anNumber
 ]
 
 { #category : #validation }
-LWServerContext >> hasSeen: anObservation [
+LWContext >> hasSeen: anObservation [
 
 	 ^ buffer anySatisfy: [ :each | each = anObservation ]
 ]
 
 { #category : #initialization }
-LWServerContext >> initialize [ 
+LWContext >> initialize [ 
 	buffer :=  LWBuffer new. 
 	sessionType := 'persistent'.
 	sessionFactory := LWSessionManager  new. 
@@ -54,19 +54,19 @@ LWServerContext >> initialize [
 ]
 
 { #category : #accessing }
-LWServerContext >> logger [
+LWContext >> logger [
 
 	^ logger
 ]
 
 { #category : #accessing }
-LWServerContext >> logger: anObject [
+LWContext >> logger: anObject [
 
 	logger := anObject
 ]
 
 { #category : #persistence }
-LWServerContext >> persistObservation: obsevarion [
+LWContext >> persistObservation: obsevarion [
 
 	| sessionTemp |
 	sessionTemp := self session.
@@ -76,7 +76,7 @@ LWServerContext >> persistObservation: obsevarion [
 ]
 
 { #category : #filtering }
-LWServerContext >> saveObservation: anObservation [
+LWContext >> saveObservation: anObservation [
 
 	(self hasSeen: anObservation) ifTrue: [ 
 		logger
@@ -94,19 +94,19 @@ LWServerContext >> saveObservation: anObservation [
 ]
 
 { #category : #accessing }
-LWServerContext >> savedCount [
+LWContext >> savedCount [
 
 	^ savedCount 
 ]
 
 { #category : #accessing }
-LWServerContext >> savedCount: anObject [
+LWContext >> savedCount: anObject [
 
 	savedCount  := anObject
 ]
 
 { #category : #accessing }
-LWServerContext >> session [
+LWContext >> session [
 
 	 session ifNil: [  session :=  sessionFactory createSession: self sessionType ].
 	session isLoggedIn ifFalse: [ session login ].
@@ -114,31 +114,31 @@ LWServerContext >> session [
 ]
 
 { #category : #accessing }
-LWServerContext >> session: anObject [
+LWContext >> session: anObject [
 
 	session := anObject
 ]
 
 { #category : #accessing }
-LWServerContext >> sessionFactory [
+LWContext >> sessionFactory [
 
 	^ sessionFactory
 ]
 
 { #category : #accessing }
-LWServerContext >> sessionFactory: anObject [
+LWContext >> sessionFactory: anObject [
 
 	sessionFactory := anObject
 ]
 
 { #category : #accessing }
-LWServerContext >> sessionType [
+LWContext >> sessionType [
 
 	^ sessionType
 ]
 
 { #category : #accessing }
-LWServerContext >> sessionType: anObject [
+LWContext >> sessionType: anObject [
 
 	sessionType := anObject
 ]
