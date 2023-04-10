@@ -64,20 +64,33 @@ LWServer >> context: anObject [
 { #category : #running }
 LWServer >> getObservation [
 
-	| json  observation |
-	observationPromise   ifNil: [
-		 observationPromise := self taskBlock promiseAt: (Processor userBackgroundPriority). 
-		^nil ]
-	ifNotNil: [  
-		( observationPromise hasValue ) ifTrue: [
-		json := observationPromise value.
-		observationPromise := nil.
-		observation := NeoJSONReader fromString: json as: LWObservation.
-		observation message: json.
-		^ observation
+	| json observation |
+	observationPromise
+		ifNil: [ 
+			self getObservationPromise.
+			^ nil ]
+		ifNotNil: [ 
+			observationPromise hasValue ifTrue: [ 
+				json := observationPromise value.
+				json ifNil: [ ^nil]. 
+					observationPromise := nil.
+					observation := [  NeoJSONReader fromString: json as: LWObservation]
+						on: Exception do:[nil].
+				observation ifNotNil: [ observation message: json].	
+				^observation ]
+				ifFalse: [^nil]
 		]
-	].
-	^nil
+		
+			
+	
+]
+
+{ #category : #accessing }
+LWServer >> getObservationPromise [
+
+	^observationPromise   ifNil: [
+		 observationPromise := self taskBlock promiseAt: (Processor userBackgroundPriority)].
+	
 ]
 
 { #category : #initialization }
@@ -113,9 +126,10 @@ LWServer >> run [
 	count := 0.
 	self canRun ifTrue: [ 
 		task := [ 
-				 count >100   ifTrue: [ Transcript show: 'running'; cr. count := 0. ].
+				  Transcript show: 'running'; cr. count := 0.
 		        [ context captureComplete ] whileTrue: [ 
 			        observation := self getObservation.
+				  Transcript show: 'observation'; show: observation; cr. count := 0.
 			        observation ifNotNil: [ 
 				        observation isValidObsevation ifTrue: [ 
 					        self context saveObservation: observation ] ] ] 
@@ -125,10 +139,25 @@ LWServer >> run [
 	^ task
 ]
 
-{ #category : #filtering }
-LWServer >> saveObservation: anObservation [
+{ #category : #running }
+LWServer >> runOnce [
 
-	^self context saveObservation: anObservation
+	| observation count |
+	Transcript
+		show: 'running ';
+		cr.
+	count := 0.
+	observation := self getObservation.
+	Transcript
+		show: 'observation" ';
+		show: observation;
+		cr.
+	count := 0.
+	observation ifNotNil: [ 
+		observation isValidObsevation ifTrue: [ 
+			self context saveObservation: observation ] ].
+	task ifNotNil:[Transcript show: task isActiveProcess].
+	^ task
 ]
 
 { #category : #accessing }

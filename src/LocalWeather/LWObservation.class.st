@@ -77,18 +77,20 @@ LWObservation class >> neoJsonMapping: mapper [
 
 { #category : #'as yet unclassified' }
 LWObservation class >> observationBlock [
+	
 
-^ [ |client result | 
+^ [ | client result | 
 	client := MQTTClient new.
 	client
-    	host: '192.168.0.232';
-    	keepalive: 60;
-    	timeout: 60;
-    	open;
-    	subscribeToTopic: 'weather/accurite'.
-	result := client readMessage.
-   client close.
-	result message asString]
+		host: '192.168.0.232';
+		keepalive: 60;
+		timeout: 60.
+	client open. 
+   result :=  [
+		client	subscribeToTopic: 'weather/accurite'.
+		client readMessage ] ensure: [client close]. 
+	result ifNotNil: [ result message asString ]
+]
 ]
 
 { #category : #comparing }
